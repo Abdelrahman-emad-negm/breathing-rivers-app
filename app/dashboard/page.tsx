@@ -331,7 +331,7 @@ export default function DashboardPage() {
                         eventTitle={selectedEvent.title}
                         eventType={selectedEvent.type}
                         onQRGenerated={(qrCode) => {
-                          console.log("[v0] Generated QR code:", qrCode)
+                          // QR code generated successfully
                         }}
                       />
                       <Button variant="outline" size="sm" onClick={() => setShowQRGenerator(false)} className="mt-2">

@@ -175,8 +175,7 @@ export default function StudentDashboardPage() {
       setRiverHealth(result.newRiverHealth)
 
       if (result.points > 0) {
-        // Show success feedback
-        console.log(`[v0] Correct answer! +${result.points} points, river health: ${result.newRiverHealth}%`)
+        // Show success feedback without debug logs
       }
     } catch (error) {
       console.error("Error submitting quiz answer:", error)
