@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { QRCodeGenerator } from "@/components/qr-code-generator"
+import { QRCodeScanner } from "@/components/qr-code-scanner"
 import {
   Waves,
   Play,
@@ -22,7 +24,10 @@ import {
   Calendar,
   MapPin,
   ArrowRight,
+  Scan,
 } from "lucide-react"
+import { api } from "@/lib/api"
+import type { LeaderboardEntry, EnvironmentalData } from "@/lib/storage"
 
 export default function DashboardPage() {
   const searchParams = useSearchParams()
@@ -30,43 +35,33 @@ export default function DashboardPage() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [timelapseProgress, setTimelapseProgress] = useState(0)
   const [currentYear, setCurrentYear] = useState(2020)
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [environmentalData, setEnvironmentalData] = useState<EnvironmentalData | null>(null)
+  const [aiPredictions, setAiPredictions] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [showQRGenerator, setShowQRGenerator] = useState(false)
+  const [showQRScanner, setShowQRScanner] = useState(false)
+  const [selectedEvent, setSelectedEvent] = useState<any>(null)
 
   const riverData = {
     nile: {
       name: "The Nile",
       location: "Africa",
-      currentTemp: 28,
-      vegetation: 65,
-      pollutionLevel: "Moderate",
       image: "/nile-river-flowing-through-desert-landscape-with-p.jpg",
     },
     amazon: {
       name: "The Amazon",
       location: "South America",
-      currentTemp: 26,
-      vegetation: 92,
-      pollutionLevel: "Low",
       image: "/amazon-river-winding-through-lush-green-rainforest.jpg",
     },
     yangtze: {
       name: "The Yangtze",
       location: "China",
-      currentTemp: 18,
-      vegetation: 58,
-      pollutionLevel: "High",
       image: "/yangtze-river-flowing-through-chinese-mountains-an.jpg",
     },
   }
 
   const river = riverData[selectedRiver as keyof typeof riverData] || riverData.nile
-
-  const leaderboardData = [
-    { rank: 1, name: "EcoWarrior2024", points: 2850, activities: 45, badge: "🌟" },
-    { rank: 2, name: "RiverGuardian", points: 2640, activities: 38, badge: "🏆" },
-    { rank: 3, name: "GreenThumb", points: 2420, activities: 35, badge: "🥉" },
-    { rank: 4, name: "AquaDefender", points: 2180, activities: 31, badge: "🌊" },
-    { rank: 5, name: "TreePlanter", points: 1950, activities: 28, badge: "🌳" },
-  ]
 
   const upcomingEvents = [
     {
@@ -95,29 +90,31 @@ export default function DashboardPage() {
     },
   ]
 
-  const aiPredictions = [
-    {
-      type: "flood",
-      severity: "moderate",
-      message: "Moderate flood risk detected in the upper basin region",
-      timeframe: "Next 7 days",
-      confidence: 78,
-    },
-    {
-      type: "pollution",
-      severity: "high",
-      message: "Industrial runoff levels increasing downstream",
-      timeframe: "Current",
-      confidence: 92,
-    },
-    {
-      type: "temperature",
-      severity: "low",
-      message: "Temperature rising above seasonal average",
-      timeframe: "Next 14 days",
-      confidence: 65,
-    },
-  ]
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true)
+
+        // Load environmental data
+        const envData = await api.getEnvironmentalData(selectedRiver)
+        setEnvironmentalData(envData)
+
+        // Load leaderboard
+        const leaderboardData = await api.getLeaderboard()
+        setLeaderboard(leaderboardData)
+
+        // Load AI predictions
+        const predictions = await api.getAIPredictions(selectedRiver)
+        setAiPredictions(predictions)
+      } catch (error) {
+        console.error("Error loading dashboard data:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadData()
+  }, [selectedRiver])
 
   useEffect(() => {
     let interval: NodeJS.Timeout
@@ -135,6 +132,39 @@ export default function DashboardPage() {
 
   const handleRoleSelection = () => {
     window.location.href = `/role-selection?river=${selectedRiver}`
+  }
+
+  const handleJoinEvent = async (event: any) => {
+    const user = await api.getCurrentUser()
+    if (!user) {
+      alert("Please register first to join events!")
+      return
+    }
+
+    setSelectedEvent(event)
+    setShowQRGenerator(true)
+  }
+
+  const handleQRScanResult = async (result: { valid: boolean; points: number; message: string }) => {
+    if (result.valid) {
+      // Reload leaderboard to show updated points
+      const updatedLeaderboard = await api.getLeaderboard()
+      setLeaderboard(updatedLeaderboard)
+    }
+
+    // Show result message
+    alert(result.message)
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 flex items-center justify-center">
+        <div className="text-center">
+          <Waves className="h-12 w-12 text-primary animate-pulse mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading river data...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -211,48 +241,60 @@ export default function DashboardPage() {
                 <CardTitle>Environmental Indicators</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-3 gap-6">
-                  <div className="text-center">
-                    <div className="flex justify-center mb-2">
-                      <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-full">
-                        <Thermometer className="h-6 w-6 text-blue-600" />
+                {environmentalData ? (
+                  <div className="grid md:grid-cols-3 gap-6">
+                    <div className="text-center">
+                      <div className="flex justify-center mb-2">
+                        <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-full">
+                          <Thermometer className="h-6 w-6 text-blue-600" />
+                        </div>
                       </div>
+                      <h3 className="font-semibold mb-1">Temperature</h3>
+                      <p className="text-2xl font-bold text-blue-600">{environmentalData.temperature.toFixed(1)}°C</p>
+                      <p className="text-sm text-muted-foreground">
+                        {environmentalData.temperature > 25 ? "+2°C from average" : "Normal range"}
+                      </p>
                     </div>
-                    <h3 className="font-semibold mb-1">Temperature</h3>
-                    <p className="text-2xl font-bold text-blue-600">{river.currentTemp}°C</p>
-                    <p className="text-sm text-muted-foreground">+2°C from average</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="flex justify-center mb-2">
-                      <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-full">
-                        <TreePine className="h-6 w-6 text-green-600" />
+                    <div className="text-center">
+                      <div className="flex justify-center mb-2">
+                        <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-full">
+                          <TreePine className="h-6 w-6 text-green-600" />
+                        </div>
                       </div>
+                      <h3 className="font-semibold mb-1">Vegetation Cover</h3>
+                      <p className="text-2xl font-bold text-green-600">{environmentalData.vegetation.toFixed(0)}%</p>
+                      <Progress value={environmentalData.vegetation} className="mt-2 h-2" />
                     </div>
-                    <h3 className="font-semibold mb-1">Vegetation Cover</h3>
-                    <p className="text-2xl font-bold text-green-600">{river.vegetation}%</p>
-                    <Progress value={river.vegetation} className="mt-2 h-2" />
-                  </div>
-                  <div className="text-center">
-                    <div className="flex justify-center mb-2">
-                      <div className="p-3 bg-orange-100 dark:bg-orange-900/20 rounded-full">
-                        <Fish className="h-6 w-6 text-orange-600" />
+                    <div className="text-center">
+                      <div className="flex justify-center mb-2">
+                        <div className="p-3 bg-orange-100 dark:bg-orange-900/20 rounded-full">
+                          <Fish className="h-6 w-6 text-orange-600" />
+                        </div>
                       </div>
+                      <h3 className="font-semibold mb-1">Pollution Level</h3>
+                      <Badge
+                        variant={
+                          environmentalData.pollution < 30
+                            ? "secondary"
+                            : environmentalData.pollution < 60
+                              ? "outline"
+                              : "destructive"
+                        }
+                        className="text-sm"
+                      >
+                        {environmentalData.pollution < 30
+                          ? "Low"
+                          : environmentalData.pollution < 60
+                            ? "Moderate"
+                            : "High"}
+                      </Badge>
                     </div>
-                    <h3 className="font-semibold mb-1">Pollution Level</h3>
-                    <Badge
-                      variant={
-                        river.pollutionLevel === "Low"
-                          ? "secondary"
-                          : river.pollutionLevel === "Moderate"
-                            ? "outline"
-                            : "destructive"
-                      }
-                      className="text-sm"
-                    >
-                      {river.pollutionLevel}
-                    </Badge>
                   </div>
-                </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">Loading environmental data...</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -266,6 +308,38 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
+                  {/* QR Tools */}
+                  <div className="flex gap-2 mb-4">
+                    <Button variant="outline" size="sm" onClick={() => setShowQRScanner(!showQRScanner)}>
+                      <Scan className="h-4 w-4 mr-2" />
+                      {showQRScanner ? "Hide Scanner" : "Scan QR Code"}
+                    </Button>
+                  </div>
+
+                  {/* QR Scanner */}
+                  {showQRScanner && (
+                    <div className="mb-6">
+                      <QRCodeScanner onScanResult={handleQRScanResult} />
+                    </div>
+                  )}
+
+                  {/* QR Generator */}
+                  {showQRGenerator && selectedEvent && (
+                    <div className="mb-6">
+                      <QRCodeGenerator
+                        eventId={selectedEvent.id}
+                        eventTitle={selectedEvent.title}
+                        eventType={selectedEvent.type}
+                        onQRGenerated={(qrCode) => {
+                          console.log("[v0] Generated QR code:", qrCode)
+                        }}
+                      />
+                      <Button variant="outline" size="sm" onClick={() => setShowQRGenerator(false)} className="mt-2">
+                        Close Generator
+                      </Button>
+                    </div>
+                  )}
+
                   {upcomingEvents.map((event) => (
                     <div
                       key={event.id}
@@ -295,9 +369,9 @@ export default function DashboardPage() {
                           </div>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => handleJoinEvent(event)}>
                         <QrCode className="h-4 w-4 mr-2" />
-                        Join Event
+                        Get QR Code
                       </Button>
                     </div>
                   ))}
@@ -318,23 +392,31 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {leaderboardData.map((user) => (
-                    <div key={user.rank} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-full text-sm font-bold">
-                          {user.rank}
+                  {leaderboard.length > 0 ? (
+                    leaderboard.map((user, index) => (
+                      <div key={user.userId} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-full text-sm font-bold">
+                            {index + 1}
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">{user.name}</p>
+                            <p className="text-xs text-muted-foreground">{user.activities} activities</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-sm">{user.name}</p>
-                          <p className="text-xs text-muted-foreground">{user.activities} activities</p>
+                        <div className="text-right">
+                          <p className="font-bold text-sm">{user.points}</p>
+                          <p className="text-xs">
+                            {index === 0 ? "🌟" : index === 1 ? "🏆" : index === 2 ? "🥉" : "🌊"}
+                          </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-sm">{user.points}</p>
-                        <p className="text-xs">{user.badge}</p>
-                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4">
+                      <p className="text-muted-foreground">Loading leaderboard...</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -349,27 +431,71 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {aiPredictions.map((prediction, index) => (
-                    <div
-                      key={index}
-                      className={`p-3 rounded-lg border-l-4 ${
-                        prediction.severity === "high"
-                          ? "border-red-500 bg-red-50 dark:bg-red-900/10"
-                          : prediction.severity === "moderate"
-                            ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-900/10"
-                            : "border-blue-500 bg-blue-50 dark:bg-blue-900/10"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-semibold text-sm capitalize">{prediction.type} Alert</h4>
-                        <Badge variant="outline" className="text-xs">
-                          {prediction.confidence}% confidence
-                        </Badge>
+                  {aiPredictions ? (
+                    <>
+                      <div
+                        className={`p-3 rounded-lg border-l-4 ${
+                          aiPredictions.flood.risk > 70
+                            ? "border-red-500 bg-red-50 dark:bg-red-900/10"
+                            : aiPredictions.flood.risk > 40
+                              ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-900/10"
+                              : "border-blue-500 bg-blue-50 dark:bg-blue-900/10"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-semibold text-sm">Flood Alert</h4>
+                          <Badge variant="outline" className="text-xs">
+                            {aiPredictions.flood.risk.toFixed(0)}% risk
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-2">{aiPredictions.flood.message}</p>
+                        <p className="text-xs font-medium">Next 48 hours</p>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-2">{prediction.message}</p>
-                      <p className="text-xs font-medium">{prediction.timeframe}</p>
+
+                      <div
+                        className={`p-3 rounded-lg border-l-4 ${
+                          aiPredictions.pollution.level > 70
+                            ? "border-red-500 bg-red-50 dark:bg-red-900/10"
+                            : aiPredictions.pollution.level > 40
+                              ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-900/10"
+                              : "border-blue-500 bg-blue-50 dark:bg-blue-900/10"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-semibold text-sm">Pollution Alert</h4>
+                          <Badge variant="outline" className="text-xs">
+                            {aiPredictions.pollution.level.toFixed(0)}% level
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-2">{aiPredictions.pollution.message}</p>
+                        <p className="text-xs font-medium">Current</p>
+                      </div>
+
+                      <div
+                        className={`p-3 rounded-lg border-l-4 ${
+                          Math.abs(aiPredictions.temperature.change) > 2
+                            ? "border-red-500 bg-red-50 dark:bg-red-900/10"
+                            : Math.abs(aiPredictions.temperature.change) > 1
+                              ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-900/10"
+                              : "border-blue-500 bg-blue-50 dark:bg-blue-900/10"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-semibold text-sm">Temperature Alert</h4>
+                          <Badge variant="outline" className="text-xs">
+                            {aiPredictions.temperature.change > 0 ? "+" : ""}
+                            {aiPredictions.temperature.change.toFixed(1)}°C
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-2">{aiPredictions.temperature.message}</p>
+                        <p className="text-xs font-medium">Next 14 days</p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-4">
+                      <p className="text-muted-foreground">Loading AI predictions...</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>

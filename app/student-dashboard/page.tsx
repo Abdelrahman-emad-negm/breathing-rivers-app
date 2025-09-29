@@ -23,6 +23,8 @@ import {
   Target,
   Clock,
 } from "lucide-react"
+import { api } from "@/lib/api"
+import type { User } from "@/lib/storage"
 
 export default function StudentDashboardPage() {
   const searchParams = useSearchParams()
@@ -34,6 +36,9 @@ export default function StudentDashboardPage() {
   const [timeLeft, setTimeLeft] = useState(30)
   const [isGameActive, setIsGameActive] = useState(false)
   const [currentTab, setCurrentTab] = useState("quiz")
+  const [user, setUser] = useState<User | null>(null)
+  const [quizProgress, setQuizProgress] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
   const riverNames = {
     nile: "The Nile",
@@ -45,24 +50,28 @@ export default function StudentDashboardPage() {
 
   const quizQuestions = [
     {
+      id: "q1",
       question: "What percentage of Earth's water is freshwater?",
       options: ["97%", "3%", "10%", "50%"],
       correct: 1,
       explanation: "Only 3% of Earth's water is freshwater, making it a precious resource!",
     },
     {
+      id: "q2",
       question: "Which activity uses the most water in a typical household?",
       options: ["Drinking", "Showering", "Toilet flushing", "Washing dishes"],
       correct: 2,
       explanation: "Toilet flushing accounts for about 30% of household water use.",
     },
     {
+      id: "q3",
       question: "How long can a river ecosystem take to recover from pollution?",
       options: ["1 year", "5 years", "10-50 years", "100+ years"],
       correct: 2,
       explanation: "River ecosystems can take 10-50 years or more to fully recover from severe pollution.",
     },
     {
+      id: "q4",
       question: "What is the main cause of river pollution worldwide?",
       options: ["Industrial waste", "Agricultural runoff", "Plastic waste", "Oil spills"],
       correct: 1,
@@ -100,6 +109,49 @@ export default function StudentDashboardPage() {
   const currentQuestion = quizQuestions[currentQuestionIndex]
 
   useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        setLoading(true)
+
+        const currentUser = await api.getCurrentUser()
+        if (!currentUser) {
+          // Create a demo student user if none exists
+          const newUser = await api.register({
+            name: "Student Demo",
+            email: "student@demo.com",
+            role: "student",
+            selectedRiver: selectedRiver as any,
+          })
+          setUser(newUser)
+        } else {
+          setUser(currentUser)
+        }
+
+        // Load quiz progress
+        const progress = await api.getCurrentUser()
+        if (progress) {
+          // Get quiz progress from storage
+          const quizData = JSON.parse(localStorage.getItem("breathing_rivers_quiz_progress") || "null")
+          if (quizData) {
+            const userProgress = quizData.find((p: any) => p.userId === progress.id)
+            if (userProgress) {
+              setQuizProgress(userProgress)
+              setRiverHealth(userProgress.riverHealth || 45)
+              setScore(userProgress.correctAnswers * 25 || 0)
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error loading user data:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadUserData()
+  }, [selectedRiver])
+
+  useEffect(() => {
     let interval: NodeJS.Timeout
     if (isGameActive && timeLeft > 0) {
       interval = setInterval(() => {
@@ -111,10 +163,23 @@ export default function StudentDashboardPage() {
     return () => clearInterval(interval)
   }, [isGameActive, timeLeft])
 
-  const handleQuizAnswer = (selectedIndex: number) => {
-    if (selectedIndex === currentQuestion.correct) {
-      setScore(score + 25)
-      setRiverHealth(Math.min(100, riverHealth + 10))
+  const handleQuizAnswer = async (selectedIndex: number) => {
+    if (!user) return
+
+    const isCorrect = selectedIndex === currentQuestion.correct
+
+    try {
+      const result = await api.submitQuizAnswer(user.id, currentQuestion.id, isCorrect)
+
+      setScore(score + result.points)
+      setRiverHealth(result.newRiverHealth)
+
+      if (result.points > 0) {
+        // Show success feedback
+        console.log(`[v0] Correct answer! +${result.points} points, river health: ${result.newRiverHealth}%`)
+      }
+    } catch (error) {
+      console.error("Error submitting quiz answer:", error)
     }
 
     if (currentQuestionIndex < quizQuestions.length - 1) {
@@ -131,22 +196,49 @@ export default function StudentDashboardPage() {
     setGameScore(0)
   }
 
-  const collectTrash = () => {
-    if (isGameActive) {
-      setGameScore(gameScore + 10)
+  const collectTrash = async () => {
+    if (isGameActive && user) {
+      const points = 10
+      setGameScore(gameScore + points)
       setRiverHealth(Math.min(100, riverHealth + 2))
+
+      // Add activity to backend
+      try {
+        await api.submitDailyUsage(user.id, { waterUsage: 150, energyUsage: 120 })
+      } catch (error) {
+        console.error("Error recording activity:", error)
+      }
     }
   }
 
-  const saveFish = () => {
-    if (isGameActive) {
-      setGameScore(gameScore + 25)
+  const saveFish = async () => {
+    if (isGameActive && user) {
+      const points = 25
+      setGameScore(gameScore + points)
       setRiverHealth(Math.min(100, riverHealth + 5))
+
+      // Add activity to backend
+      try {
+        await api.submitDailyUsage(user.id, { waterUsage: 100, energyUsage: 80 })
+      } catch (error) {
+        console.error("Error recording activity:", error)
+      }
     }
   }
 
   const goBack = () => {
     window.location.href = `/dashboard?river=${selectedRiver}`
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 flex items-center justify-center">
+        <div className="text-center">
+          <Brain className="h-12 w-12 text-primary animate-pulse mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading student dashboard...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
