@@ -9,7 +9,7 @@ import "./globals.css"
 export const metadata: Metadata = {
   title: "BreathingRivers",
   description: "Environmental awareness app for river conservation",
-  generator: "v0.app",
+  generator: "BreathingRivers",
 }
 
 export default function RootLayout({
