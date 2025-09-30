@@ -1,16 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   Waves,
   Droplets,
   TreePine,
   Fish,
-  ArrowRight,
   Globe,
   Users,
   Award,
@@ -34,6 +33,7 @@ export default function HomePage() {
       description: "The longest river in the world, flowing through 11 countries",
       image: "/nile-river-flowing-through-desert-landscape-with-p.jpg",
       stats: { temperature: "28°C", vegetation: "65%", pollution: "Moderate" },
+      color: "from-amber-400 to-orange-600",
     },
     {
       id: "amazon",
@@ -43,6 +43,7 @@ export default function HomePage() {
       description: "The largest river by discharge volume, heart of the rainforest",
       image: "/amazon-river-winding-through-lush-green-rainforest.jpg",
       stats: { temperature: "26°C", vegetation: "92%", pollution: "Low" },
+      color: "from-emerald-400 to-green-600",
     },
     {
       id: "yangtze",
@@ -52,6 +53,7 @@ export default function HomePage() {
       description: "Asia's longest river, supporting over 400 million people",
       image: "/yangtze-river-flowing-through-chinese-mountains-an.jpg",
       stats: { temperature: "18°C", vegetation: "58%", pollution: "High" },
+      color: "from-cyan-400 to-blue-600",
     },
   ]
 
@@ -61,8 +63,7 @@ export default function HomePage() {
       title: "Student",
       description: "Learn through interactive games, quizzes, and educational content about river conservation",
       icon: GraduationCap,
-      color: "text-blue-600",
-      bgColor: "bg-blue-100 dark:bg-blue-900/20",
+      color: "from-blue-400 to-blue-600",
       features: ["Educational Games", "Interactive Quizzes", "Progress Tracking", "Achievement Badges"],
     },
     {
@@ -71,8 +72,7 @@ export default function HomePage() {
       description:
         "Track your daily water usage, carbon footprint, and participate in community conservation activities",
       icon: Briefcase,
-      color: "text-green-600",
-      bgColor: "bg-green-100 dark:bg-green-900/20",
+      color: "from-green-400 to-green-600",
       features: ["Daily Life Simulator", "Carbon Footprint Tracker", "Community Events", "Impact Reports"],
     },
     {
@@ -80,8 +80,7 @@ export default function HomePage() {
       title: "Farmer",
       description: "Get smart irrigation recommendations, crop planning tools, and sustainable farming insights",
       icon: Sprout,
-      color: "text-orange-600",
-      bgColor: "bg-orange-100 dark:bg-orange-900/20",
+      color: "from-orange-400 to-orange-600",
       features: ["Smart Irrigation", "Crop Planning", "Weather Forecasts", "Soil Health Monitoring"],
     },
   ]
@@ -89,205 +88,216 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10">
       <div className="container mx-auto px-4 py-16">
-        <div className="text-center mb-16">
+        <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="relative">
-              <Waves className="h-16 w-16 text-primary animate-pulse" />
-              <div className="absolute -top-1 -right-1 h-5 w-5 bg-accent rounded-full animate-ping" />
+              <Waves className="h-12 w-12 text-primary animate-pulse" />
+              <div className="absolute -top-1 -right-1 h-4 w-4 bg-accent rounded-full animate-ping" />
             </div>
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-bold text-balance bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent mb-4">
+          <h1 className="text-4xl md:text-6xl font-bold text-balance bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent mb-3">
             Breathing Rivers
           </h1>
 
-          <div className="flex items-center justify-center gap-2 mb-6">
-            <Sparkles className="h-5 w-5 text-accent" />
-            <p className="text-lg md:text-xl text-muted-foreground">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Sparkles className="h-4 w-4 text-accent" />
+            <p className="text-base md:text-lg text-muted-foreground">
               Powered by <span className="font-bold text-primary">Team EarthLens</span>
             </p>
-            <Sparkles className="h-5 w-5 text-accent" />
+            <Sparkles className="h-4 w-4 text-accent" />
           </div>
 
-          <p className="text-xl md:text-2xl text-muted-foreground text-balance max-w-3xl mx-auto leading-relaxed">
-            Experience the pulse of our planet's most vital waterways. Join a global community dedicated to river
-            conservation through interactive exploration and real-world action.
+          <p className="text-lg md:text-xl text-muted-foreground text-balance max-w-2xl mx-auto leading-relaxed">
+            Experience the pulse of our planet's most vital waterways through interactive exploration and real-world
+            action.
           </p>
         </div>
 
-        {/* Feature Cards */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16 max-w-5xl mx-auto">
-          <Card className="text-center p-6 border-2 hover:border-primary/50 transition-colors">
-            <div className="flex justify-center mb-4">
-              <div className="p-3 bg-primary/10 rounded-full">
-                <Globe className="h-8 w-8 text-primary" />
+        <div className="grid md:grid-cols-3 gap-6 mb-12 max-w-5xl mx-auto">
+          <Card className="relative overflow-hidden text-center p-6 border-0 bg-gradient-to-br from-blue-500/10 via-cyan-500/10 to-blue-600/10 dark:from-blue-500/20 dark:via-cyan-500/20 dark:to-blue-600/20">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent" />
+            <div className="relative">
+              <div className="flex justify-center mb-4">
+                <div className="p-3 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full shadow-lg">
+                  <Globe className="h-8 w-8 text-white" />
+                </div>
               </div>
+              <h3 className="text-xl font-semibold mb-2">Global Impact</h3>
+              <p className="text-muted-foreground text-balance">
+                Monitor real-time environmental data from three of the world's most important rivers
+              </p>
             </div>
-            <h3 className="text-xl font-semibold mb-2">Global Impact</h3>
-            <p className="text-muted-foreground text-balance">
-              Monitor real-time environmental data from three of the world's most important rivers
-            </p>
           </Card>
 
-          <Card className="text-center p-6 border-2 hover:border-primary/50 transition-colors">
-            <div className="flex justify-center mb-4">
-              <div className="p-3 bg-accent/10 rounded-full">
-                <Users className="h-8 w-8 text-accent" />
+          <Card className="relative overflow-hidden text-center p-6 border-0 bg-gradient-to-br from-emerald-500/10 via-green-500/10 to-teal-600/10 dark:from-emerald-500/20 dark:via-green-500/20 dark:to-teal-600/20">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent" />
+            <div className="relative">
+              <div className="flex justify-center mb-4">
+                <div className="p-3 bg-gradient-to-br from-emerald-500 to-green-600 rounded-full shadow-lg">
+                  <Users className="h-8 w-8 text-white" />
+                </div>
               </div>
+              <h3 className="text-xl font-semibold mb-2">Community Action</h3>
+              <p className="text-muted-foreground text-balance">
+                Participate in cleanup events, tree planting, and conservation activities with QR validation
+              </p>
             </div>
-            <h3 className="text-xl font-semibold mb-2">Community Action</h3>
-            <p className="text-muted-foreground text-balance">
-              Participate in cleanup events, tree planting, and conservation activities with QR validation
-            </p>
           </Card>
 
-          <Card className="text-center p-6 border-2 hover:border-primary/50 transition-colors">
-            <div className="flex justify-center mb-4">
-              <div className="p-3 bg-secondary/30 rounded-full">
-                <Award className="h-8 w-8 text-secondary-foreground" />
+          <Card className="relative overflow-hidden text-center p-6 border-0 bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-rose-600/10 dark:from-purple-500/20 dark:via-pink-500/20 dark:to-rose-600/20">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent" />
+            <div className="relative">
+              <div className="flex justify-center mb-4">
+                <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full shadow-lg">
+                  <Award className="h-8 w-8 text-white" />
+                </div>
               </div>
+              <h3 className="text-xl font-semibold mb-2">Personalized Journey</h3>
+              <p className="text-muted-foreground text-balance">
+                Tailored experiences for Adults, Students, and Farmers with role-specific tools and insights
+              </p>
             </div>
-            <h3 className="text-xl font-semibold mb-2">Personalized Journey</h3>
-            <p className="text-muted-foreground text-balance">
-              Tailored experiences for Adults, Students, and Farmers with role-specific tools and insights
-            </p>
           </Card>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-12 h-14">
-            <TabsTrigger value="rivers" className="text-lg gap-2">
-              <Droplets className="h-5 w-5" />
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-10 h-12">
+            <TabsTrigger value="rivers" className="text-base gap-2">
+              <Droplets className="h-4 w-4" />
               Explore Rivers
             </TabsTrigger>
-            <TabsTrigger value="roles" className="text-lg gap-2">
-              <Users className="h-5 w-5" />
+            <TabsTrigger value="roles" className="text-base gap-2">
+              <Users className="h-4 w-4" />
               Choose Role
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="rivers" className="mt-0">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold mb-4">Explore Our Rivers</h2>
-              <p className="text-xl text-muted-foreground text-balance max-w-2xl mx-auto">
-                Discover real-time environmental data from NASA satellites for three of the world's most vital rivers
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold mb-3">Explore Our Rivers</h2>
+              <p className="text-lg text-muted-foreground text-balance max-w-2xl mx-auto">
+                Click on a river to discover real-time NASA satellite data
               </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {rivers.map((river) => (
-                <Card
-                  key={river.id}
-                  className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-105 border-2 hover:border-primary/50"
-                  onClick={() => router.push(`/river/${river.id}`)}
-                >
-                  <div className="relative overflow-hidden rounded-t-lg">
-                    <img
-                      src={river.image || "/placeholder.svg"}
-                      alt={river.name}
-                      className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
-                    />
-                    <div className="absolute top-4 right-4">
-                      <Badge variant="secondary" className="bg-background/90 text-foreground">
-                        {river.location}
-                      </Badge>
-                    </div>
-                  </div>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-2xl font-bold">{river.name}</h3>
-                      <span className="text-sm text-muted-foreground">{river.length}</span>
-                    </div>
-                    <p className="text-muted-foreground mb-4 text-balance">{river.description}</p>
-
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="flex items-center gap-1">
-                          <Droplets className="h-4 w-4 text-blue-500" />
-                          Temperature
-                        </span>
-                        <span className="font-medium">{river.stats.temperature}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="flex items-center gap-1">
-                          <TreePine className="h-4 w-4 text-green-500" />
-                          Vegetation
-                        </span>
-                        <span className="font-medium">{river.stats.vegetation}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="flex items-center gap-1">
-                          <Fish className="h-4 w-4 text-orange-500" />
-                          Pollution Level
-                        </span>
-                        <span
-                          className={`font-medium ${
-                            river.stats.pollution === "Low"
-                              ? "text-green-600"
-                              : river.stats.pollution === "Moderate"
-                                ? "text-yellow-600"
-                                : "text-red-600"
-                          }`}
+            <TooltipProvider>
+              <div className="flex justify-center items-center gap-12 flex-wrap max-w-4xl mx-auto">
+                {rivers.map((river) => (
+                  <Tooltip key={river.id} delayDuration={200}>
+                    <TooltipTrigger asChild>
+                      <div
+                        className="flex flex-col items-center gap-3 cursor-pointer group"
+                        onClick={() => router.push(`/river/${river.id}`)}
+                      >
+                        <div
+                          className={`relative w-32 h-32 rounded-full overflow-hidden ring-4 ring-offset-4 ring-offset-background transition-all duration-300 group-hover:ring-8 group-hover:scale-110 bg-gradient-to-br ${river.color} shadow-xl`}
                         >
-                          {river.stats.pollution}
-                        </span>
+                          <img
+                            src={river.image || "/placeholder.svg"}
+                            alt={river.name}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                          <div className="absolute bottom-2 left-0 right-0 text-center">
+                            <Badge variant="secondary" className="bg-white/90 text-black text-xs">
+                              {river.location}
+                            </Badge>
+                          </div>
+                        </div>
+                        <h3 className="text-xl font-bold group-hover:text-primary transition-colors">{river.name}</h3>
                       </div>
-                    </div>
-
-                    <Button className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                      View NASA Data
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-xs p-4">
+                      <div className="space-y-2">
+                        <p className="font-semibold text-sm">{river.description}</p>
+                        <div className="text-xs space-y-1 pt-2 border-t">
+                          <div className="flex items-center justify-between">
+                            <span className="flex items-center gap-1">
+                              <Droplets className="h-3 w-3 text-blue-500" />
+                              Temperature
+                            </span>
+                            <span className="font-medium">{river.stats.temperature}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="flex items-center gap-1">
+                              <TreePine className="h-3 w-3 text-green-500" />
+                              Vegetation
+                            </span>
+                            <span className="font-medium">{river.stats.vegetation}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="flex items-center gap-1">
+                              <Fish className="h-3 w-3 text-orange-500" />
+                              Pollution
+                            </span>
+                            <span
+                              className={`font-medium ${
+                                river.stats.pollution === "Low"
+                                  ? "text-green-600"
+                                  : river.stats.pollution === "Moderate"
+                                    ? "text-yellow-600"
+                                    : "text-red-600"
+                              }`}
+                            >
+                              {river.stats.pollution}
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground pt-2">Length: {river.length}</p>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+              </div>
+            </TooltipProvider>
           </TabsContent>
 
           <TabsContent value="roles" className="mt-0">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold mb-4">Choose Your Role</h2>
-              <p className="text-xl text-muted-foreground text-balance max-w-2xl mx-auto">
-                Select your role to access personalized activities, tools, and conservation challenges
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold mb-3">Choose Your Role</h2>
+              <p className="text-lg text-muted-foreground text-balance max-w-2xl mx-auto">
+                Select your role to access personalized activities and tools
               </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {roles.map((role) => {
-                const Icon = role.icon
-                return (
-                  <Card
-                    key={role.id}
-                    className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-105 border-2 hover:border-primary/50"
-                    onClick={() => router.push(`/${role.id}-dashboard`)}
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex justify-center mb-4">
-                        <div className={`p-4 ${role.bgColor} rounded-full`}>
-                          <Icon className={`h-10 w-10 ${role.color}`} />
-                        </div>
-                      </div>
-                      <h3 className="text-2xl font-bold text-center mb-3">{role.title}</h3>
-                      <p className="text-muted-foreground text-balance text-center mb-6">{role.description}</p>
-
-                      <div className="space-y-2 mb-6">
-                        {role.features.map((feature, index) => (
-                          <div key={index} className="flex items-center gap-2 text-sm">
-                            <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                            <span>{feature}</span>
+            <TooltipProvider>
+              <div className="flex justify-center items-center gap-12 flex-wrap max-w-4xl mx-auto">
+                {roles.map((role) => {
+                  const Icon = role.icon
+                  return (
+                    <Tooltip key={role.id} delayDuration={200}>
+                      <TooltipTrigger asChild>
+                        <div
+                          className="flex flex-col items-center gap-3 cursor-pointer group"
+                          onClick={() => router.push(`/${role.id}-dashboard`)}
+                        >
+                          <div
+                            className={`relative w-32 h-32 rounded-full overflow-hidden ring-4 ring-offset-4 ring-offset-background transition-all duration-300 group-hover:ring-8 group-hover:scale-110 bg-gradient-to-br ${role.color} shadow-xl flex items-center justify-center`}
+                          >
+                            <Icon className="h-16 w-16 text-white" />
                           </div>
-                        ))}
-                      </div>
-
-                      <Button className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                        Start as {role.title}
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )
-              })}
-            </div>
+                          <h3 className="text-xl font-bold group-hover:text-primary transition-colors">{role.title}</h3>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-xs p-4">
+                        <div className="space-y-2">
+                          <p className="font-semibold text-sm">{role.description}</p>
+                          <div className="pt-2 border-t space-y-1">
+                            {role.features.map((feature, index) => (
+                              <div key={index} className="flex items-center gap-2 text-xs">
+                                <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                                <span>{feature}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  )
+                })}
+              </div>
+            </TooltipProvider>
           </TabsContent>
         </Tabs>
       </div>
